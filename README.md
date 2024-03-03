@@ -35,15 +35,3 @@ Citrus diseases and pests pose significant threats to citrus crop yield and qual
 5. Evaluate the performance of your models using appropriate metrics and techniques.
 6. Collaborate with other participants to integrate individual solutions into a unified classification system.
 
-## Contributors
-
-- Add your name here if you contribute to the project.
-
-## Acknowledgments
-
-- Mention any datasets, libraries, or resources used in the project.
-- Provide credits to the original dataset creators if applicable.
-
-## License
-
-- This project is licensed under the [MIT License](LICENSE).
