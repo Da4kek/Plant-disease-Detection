@@ -1,78 +1,69 @@
 import tensorflow as tf
-from tensorflow.keras import layers
-import tensorflow as tf
+import os 
 
-class CNNModel(tf.Module):
-    def __init__(self):
-        super(CNNModel, self).__init__()
-        self.conv1 = tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(64, 64, 3))
-        self.maxpool1 = tf.keras.layers.MaxPooling2D((2, 2))
-        self.conv2 = tf.keras.layers.Conv2D(64, (3, 3), activation='relu')
-        self.maxpool2 = tf.keras.layers.MaxPooling2D((2, 2))
-        self.conv3 = tf.keras.layers.Conv2D(128, (3, 3), activation='relu')
-        self.maxpool3 = tf.keras.layers.MaxPooling2D((2, 2))
-        self.flatten = tf.keras.layers.Flatten()
-        self.dense1 = tf.keras.layers.Dense(128, activation='relu')
-        self.dense2 = tf.keras.layers.Dense(10, activation='softmax')
+class CNN():
+    def __init__(self, train_dir,test_dir):
+        self.train_dir = train_dir
+        self.test_dir = test_dir
+        self.model = self.build_model(input_shape=(150, 150, 3))
 
-    def __call__(self, inputs):
-        x = self.conv1(inputs)
-        x = self.maxpool1(x)
-        x = self.conv2(x)
-        x = self.maxpool2(x)
-        x = self.conv3(x)
-        x = self.maxpool3(x)
-        x = self.flatten(x)
-        x = self.dense1(x)
-        return self.dense2(x)
+    def preprocess(self):
+        train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
+            rescale=1./255,
+            rotation_range=40,
+            width_shift_range=0.2,
+            height_shift_range=0.2,
+            shear_range=0.2,
+            zoom_range=0.2,
+            horizontal_flip=True,
+            fill_mode='nearest'
+        )
+        test_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
+        train_generator = train_datagen.flow_from_directory(
+            self.train_dir,
+            target_size=(150, 150),
+            batch_size=20,
+            class_mode='binary',
+            color_mode='rgb'
+        )
+        validation_generator = test_datagen.flow_from_directory(
+            self.test_dir,
+            target_size=(150, 150),
+            batch_size=20,
+            class_mode='binary',
+            color_mode='rgb'
+        )
+        return train_generator, validation_generator
+    
+    def build_model(self,input_shape):
+        model = tf.keras.models.Sequential()
+        model.add(tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape))
+        model.add(tf.keras.layers.MaxPooling2D((2, 2)))
 
-model = CNNModel()
+        model.add(tf.keras.layers.Conv2D(64, (3, 3), activation='relu'))
+        model.add(tf.keras.layers.MaxPooling2D((2, 2)))
 
-loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-optimizer = tf.keras.optimizers.Adam()
+        model.add(tf.keras.layers.Conv2D(64, (3, 3), activation='relu'))
+        model.add(tf.keras.layers.MaxPooling2D((2, 2)))
 
-train_loss = tf.keras.metrics.Mean(name='train_loss')
-train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
-
-val_loss = tf.keras.metrics.Mean(name='val_loss')
-val_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='val_accuracy')
-
-@tf.function
-def train_step(images, labels):
-    with tf.GradientTape() as tape:
-        predictions = model(images)
-        loss = loss_object(labels, predictions)
-    gradients = tape.gradient(loss, model.trainable_variables)
-    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-
-    train_loss(loss)
-    train_accuracy(labels, predictions)
-
-@tf.function
-def val_step(images, labels):
-    predictions = model(images)
-    v_loss = loss_object(labels, predictions)
-
-    val_loss(v_loss)
-    val_accuracy(labels, predictions)
-
-EPOCHS = 10
-
-# for epoch in range(EPOCHS):
-#     for images, labels in train_dataset:
-#         train_step(images, labels)
-
-#     for val_images, val_labels in val_dataset:
-#         val_step(val_images, val_labels)
-
-#     template = 'Epoch {}, Loss: {}, Accuracy: {}, Val Loss: {}, Val Accuracy: {}'
-#     print(template.format(epoch + 1,
-#                           train_loss.result(),
-#                           train_accuracy.result() * 100,
-#                           val_loss.result(),
-#                           val_accuracy.result() * 100))
-
-#     train_loss.reset_states()
-#     train_accuracy.reset_states()
-#     val_loss.reset_states()
-#     val_accuracy.reset_states()
+        model.add(tf.keras.layers.Flatten())
+        model.add(tf.keras.layers.Dense(64, activation='relu'))
+        model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
+        return model
+    
+    def train(self,epochs):
+        train_generator, validation_generator = self.preprocess()
+        self.model.compile(optimizer='adam',
+              loss='binary_crossentropy',
+              metrics=['accuracy'])
+        history = self.model.fit(
+            train_generator,
+            steps_per_epoch=100,
+            epochs=epochs,
+            validation_data=validation_generator,
+            validation_steps=50
+        )
+        return history
+    
+    def save_model(self,model_name):
+        self.model.save(model_name)
