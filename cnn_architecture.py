@@ -22,15 +22,15 @@ class CNN():
         train_generator = train_datagen.flow_from_directory(
             self.train_dir,
             target_size=(150, 150),
-            batch_size=20,
-            class_mode='binary',
+            batch_size=10,
+            class_mode='categorical',
             color_mode='rgb'
         )
         validation_generator = test_datagen.flow_from_directory(
             self.test_dir,
             target_size=(150, 150),
-            batch_size=20,
-            class_mode='binary',
+            batch_size=10,
+            class_mode='categorical',
             color_mode='rgb'
         )
         return train_generator, validation_generator
@@ -48,20 +48,18 @@ class CNN():
 
         model.add(tf.keras.layers.Flatten())
         model.add(tf.keras.layers.Dense(64, activation='relu'))
-        model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
+        model.add(tf.keras.layers.Dense(4, activation='softmax'))
         return model
     
     def train(self,epochs):
         train_generator, validation_generator = self.preprocess()
         self.model.compile(optimizer='adam',
-              loss='binary_crossentropy',
+              loss='categorical_crossentropy',
               metrics=['accuracy'])
         history = self.model.fit(
             train_generator,
-            steps_per_epoch=100,
             epochs=epochs,
             validation_data=validation_generator,
-            validation_steps=50
         )
         return history
     
