@@ -7,7 +7,7 @@ import os
 
 model = tf.keras.models.load_model('models/cnn_model.h5')
 
-class_labels = os.listdir("dataset/train")
+class_labels = ['blackspot', 'canker', 'fresh', 'grenning']
 
 
 def main():
