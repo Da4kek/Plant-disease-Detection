@@ -2,7 +2,7 @@ import tensorflow as tf
 import os
 
 class CNN():
-    def __init__(self, train_dir, test_dir):
+    def __init__(self, train_dir, test_dir=None):
         self.train_dir = train_dir
         self.test_dir = test_dir
         self.model = self.build_model(input_shape=(150, 150, 3))
@@ -50,7 +50,7 @@ class CNN():
 
         model.add(tf.keras.layers.Flatten())
         model.add(tf.keras.layers.Dense(64, activation='relu'))
-        model.add(tf.keras.layers.Dense(4, activation='softmax'))
+        model.add(tf.keras.layers.Dense(5, activation='softmax'))
         return model
 
     def train(self, epochs):

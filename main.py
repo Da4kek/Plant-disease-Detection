@@ -4,11 +4,12 @@ from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import os 
+from sklearn.metrics import classification_report
 
-model = tf.keras.models.load_model('models/cnn_model.h5')
+model = tf.keras.models.load_model('models/cnn_fuzzy_model.h5')
 
-class_labels = ['blackspot', 'canker', 'fresh', 'grenning']
-
+class_labels = os.listdir(
+    "dataset/Citrus Leaf Disease Image/train")
 
 def main():
     st.title("Plant Disease Detection")
@@ -43,6 +44,7 @@ def main():
             plt.ylabel('Confidence (%)')
             plt.title('Confidence Scores')
             st.pyplot()
+            
 
 
 if __name__ == '__main__':
