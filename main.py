@@ -20,7 +20,7 @@ def main():
 
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
-        st.image(image, caption='Uploaded Image', use_column_width=True)
+        st.image(image, caption='Uploaded Image', use_column_width=False)
 
         if st.button('Predict'):
             image = image.resize((150, 150))
