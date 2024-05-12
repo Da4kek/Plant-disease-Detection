@@ -102,11 +102,61 @@ class ApplyNeuroFuzzyLogic(tf.keras.callbacks.Callback):
                 logs['accuracy'] - self.last_accuracy) / self.last_accuracy * 100
             loss_rate_of_change = (
                 logs['loss'] - self.last_loss) / self.last_loss * 100
-            if acc_rate_of_change < self.threshold or loss_rate_of_change < self.threshold:
+
+            predicted_probability = self.neuro_fuzzy_inference(
+                acc_rate_of_change, loss_rate_of_change)
+
+            if predicted_probability < self.threshold:
                 self.model.stop_training = False
 
         self.last_accuracy = logs['accuracy']
         self.last_loss = logs['loss']
+
+    def neuro_fuzzy_inference(self, acc_rate_of_change, loss_rate_of_change):
+        acc_membership = self.membership_accuracy(acc_rate_of_change)
+        loss_membership = self.membership_loss(loss_rate_of_change)
+
+        rule1 = min(acc_membership['low'], loss_membership['low'])
+        rule2 = min(acc_membership['medium'], loss_membership['medium'])
+        rule3 = min(acc_membership['high'], loss_membership['high'])
+
+        numerator = rule1 * 0.3 + rule2 * 0.6 + rule3 * 0.9
+        denominator = rule1 + rule2 + rule3
+        predicted_probability = numerator / denominator
+
+        return predicted_probability
+
+    def membership_accuracy(self, acc_rate_of_change):
+        membership = {}
+        if acc_rate_of_change < -50:
+            membership['low'] = 1
+            membership['medium'] = 0
+            membership['high'] = 0
+        elif acc_rate_of_change >= -50 and acc_rate_of_change <= 50:
+            membership['low'] = 0
+            membership['medium'] = 1
+            membership['high'] = 0
+        else:
+            membership['low'] = 0
+            membership['medium'] = 0
+            membership['high'] = 1
+        return membership
+
+    def membership_loss(self, loss_rate_of_change):
+        membership = {}
+        if loss_rate_of_change < -50:
+            membership['low'] = 1
+            membership['medium'] = 0
+            membership['high'] = 0
+        elif loss_rate_of_change >= -50 and loss_rate_of_change <= 50:
+            membership['low'] = 0
+            membership['medium'] = 1
+            membership['high'] = 0
+        else:
+            membership['low'] = 0
+            membership['medium'] = 0
+            membership['high'] = 1
+        return membership
 
     def on_batch_begin(self, batch, logs=None):
         pass
